@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Salary Predictor</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f0;
+      color: #1a1a18;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #1a1a18;
+      color: #ffffff;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    header svg { width: 24px; height: 24px; }
+    header h1 { font-size: 16px; font-weight: 500; letter-spacing: -0.01em; }
+
+    /* ── Layout ── */
+    main {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+    }
+
+    .hero { text-align: center; margin-bottom: 2rem; }
+    .hero h2 { font-size: 26px; font-weight: 500; margin-bottom: 8px; letter-spacing: -0.02em; }
+    .hero p { color: #5f5e5a; font-size: 15px; line-height: 1.6; }
+
+    /* ── Cards ── */
+    .card {
+      background: #ffffff;
+      border: 0.5px solid #d3d1c7;
+      border-radius: 12px;
+      padding: 1.75rem;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Slider section ── */
+    .field-label {
+      font-size: 13px;
+      color: #5f5e5a;
+      margin-bottom: 4px;
+    }
+    .years-value {
+      font-size: 36px;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      margin-bottom: 2px;
+    }
+    .years-hint { font-size: 13px; color: #888780; margin-bottom: 1.25rem; }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      background: #d3d1c7;
+      border-radius: 2px;
+      outline: none;
+      margin-bottom: 6px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      background: #1a1a18;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: #1a1a18;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+    }
+
+    .range-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #888780;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── Manual input ── */
+    .manual-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 1.5rem;
+      align-items: center;
+    }
+    .manual-row label { font-size: 13px; color: #5f5e5a; white-space: nowrap; }
+    .manual-row input[type="number"] {
+      flex: 1;
+      padding: 8px 12px;
+      border: 0.5px solid #d3d1c7;
+      border-radius: 8px;
+      font-size: 15px;
+      background: #fff;
+      color: #1a1a18;
+      outline: none;
+    }
+    .manual-row input[type="number"]:focus {
+      border-color: #888780;
+      box-shadow: 0 0 0 3px rgba(26,26,24,0.06);
+    }
+
+    /* ── Button ── */
+    .predict-btn {
+      width: 100%;
+      padding: 13px;
+      background: #1a1a18;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      letter-spacing: -0.01em;
+    }
+    .predict-btn:hover { opacity: 0.85; }
+    .predict-btn:active { transform: scale(0.99); }
+    .predict-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ── Result ── */
+    #result-card { display: none; }
+    #result-card.visible { display: block; }
+
+    .result-label { font-size: 13px; color: #5f5e5a; margin-bottom: 6px; }
+    .result-salary {
+      font-size: 44px;
+      font-weight: 500;
+      letter-spacing: -0.04em;
+      margin-bottom: 8px;
+    }
+    .result-badge {
+      display: inline-block;
+      background: #eaf3de;
+      color: #3b6d11;
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 1.25rem;
+    }
+
+    .breakdown {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      border-top: 0.5px solid #d3d1c7;
+      padding-top: 1.25rem;
+    }
+    .stat {
+      background: #f5f5f0;
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .stat-label { font-size: 11px; color: #888780; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .stat-value { font-size: 15px; font-weight: 500; }
+
+    /* ── Error ── */
+    #error-msg {
+      display: none;
+      background: #fcebeb;
+      color: #a32d2d;
+      border: 0.5px solid #f09595;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 14px;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+    #error-msg.visible { display: block; }
+
+    /* ── History ── */
+    #history-section { display: none; }
+    #history-section.visible { display: block; }
+
+    .history-header {
+      font-size: 13px;
+      color: #5f5e5a;
+      margin-bottom: 8px;
+      padding: 0 2px;
+    }
+    .history-item {
+      background: #ffffff;
+      border: 0.5px solid #d3d1c7;
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .history-item:hover { background: #f5f5f0; }
+    .history-yrs { color: #5f5e5a; }
+    .history-sal { font-weight: 500; }
+
+    /* ── API status pill ── */
+    .api-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #5f5e5a;
+      margin-bottom: 1.5rem;
+      padding: 8px 14px;
+      background: #fff;
+      border: 0.5px solid #d3d1c7;
+      border-radius: 20px;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #888780;
+    }
+    .dot.online { background: #639922; }
+    .dot.offline { background: #e24b4a; }
+
+    /* ── Loading spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Result animation ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate { animation: fadeUp 0.3s ease forwards; }
+  </style>
+</head>
+<body>
+
+<header>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <path stroke-linecap="round" stroke-linejoin="round"
+      d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+  </svg>
+  <h1>Salary Predictor API</h1>
+</header>
+
+<main>
+  <div class="hero">
+    <h2>Estimate your salary</h2>
+    <p>Enter your years of experience and get a predicted annual salary powered by a trained ML model.</p>
+  </div>
+
+  <!-- API health indicator -->
+  <div class="api-status">
+    <span class="dot" id="status-dot"></span>
+    <span id="status-text">Checking API…</span>
+  </div>
+
+  <!-- Input card -->
+  <div class="card">
+    <div class="field-label">Years of experience</div>
+    <div class="years-value" id="years-display">5.0 <span style="font-size:20px;color:#888780">years</span></div>
+    <div class="years-hint">Drag the slider or type a value below</div>
+
+    <input type="range" id="exp-slider" min="0" max="30" step="0.5" value="5" />
+    <div class="range-labels">
+      <span>0</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25</span><span>30 yrs</span>
+    </div>
+
+    <div class="manual-row">
+      <label for="manual-input">Or type directly:</label>
+      <input type="number" id="manual-input" min="0" max="50" step="0.5" value="5" placeholder="e.g. 7.5" />
+    </div>
+
+    <button class="predict-btn" id="predict-btn" onclick="predict()">
+      Predict salary
+    </button>
+  </div>
+
+  <!-- Error message -->
+  <div id="error-msg"></div>
+
+  <!-- Result card -->
+  <div class="card" id="result-card">
+    <div class="result-label">Predicted annual salary</div>
+    <div class="result-salary" id="result-salary">$0</div>
+    <span class="result-badge" id="result-badge">— years experience</span>
+
+    <div class="breakdown">
+      <div class="stat">
+        <div class="stat-label">Monthly</div>
+        <div class="stat-value" id="monthly">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Weekly</div>
+        <div class="stat-value" id="weekly">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Hourly</div>
+        <div class="stat-value" id="hourly">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent predictions -->
+  <div id="history-section">
+    <div class="history-header">Recent predictions</div>
+    <div id="history-list"></div>
+  </div>
+</main>
+
+<script>
+  const slider     = document.getElementById('exp-slider');
+  const manual     = document.getElementById('manual-input');
+  const display    = document.getElementById('years-display');
+  const btn        = document.getElementById('predict-btn');
+  const resultCard = document.getElementById('result-card');
+  const errorDiv   = document.getElementById('error-msg');
+
+  const predictions = [];
+
+  /* ── Sync slider ↔ manual input ── */
+  slider.addEventListener('input', () => {
+    const v = parseFloat(slider.value).toFixed(1);
+    display.innerHTML = `${v} <span style="font-size:20px;color:#888780">years</span>`;
+    manual.value = v;
+  });
+
+  manual.addEventListener('input', () => {
+    let v = parseFloat(manual.value);
+    if (isNaN(v)) return;
+    v = Math.min(50, Math.max(0, v));
+    slider.value = Math.min(30, v);
+    display.innerHTML = `${v.toFixed(1)} <span style="font-size:20px;color:#888780">years</span>`;
+  });
+
+  /* ── Health check ── */
+  async function checkHealth() {
+    const dot  = document.getElementById('status-dot');
+    const text = document.getElementById('status-text');
+    try {
+      const res = await fetch('http://localhost:8000/health');
+      if (res.ok) {
+        dot.className  = 'dot online';
+        text.textContent = 'API connected';
+      } else { throw new Error(); }
+    } catch {
+      dot.className  = 'dot offline';
+      text.textContent = 'API offline — run uvicorn first';
+    }
+  }
+  checkHealth();
+
+  /* ── Predict ── */
+  async function predict() {
+    const years = parseFloat(manual.value);
+
+    if (isNaN(years) || years < 0 || years > 50) {
+      showError('Please enter a value between 0 and 50.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Predicting…';
+    errorDiv.className = '';
+    resultCard.className = 'card';
+
+    try {
+      const res = await fetch('http://localhost:8000/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ years_experience: years })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || `HTTP ${res.status}`);
+      }
+
+      const data   = await res.json();
+      const salary = Math.round(data.predicted_salary);
+
+      /* ── Populate result ── */
+      document.getElementById('result-salary').textContent =
+        '$' + salary.toLocaleString();
+      document.getElementById('result-badge').textContent =
+        years.toFixed(1) + ' years experience';
+      document.getElementById('monthly').textContent =
+        '$' + Math.round(salary / 12).toLocaleString();
+      document.getElementById('weekly').textContent =
+        '$' + Math.round(salary / 52).toLocaleString();
+      document.getElementById('hourly').textContent =
+        '$' + Math.round(salary / 2080) + '/hr';
+
+      resultCard.className = 'card visible animate';
+
+      /* ── History ── */
+      predictions.unshift({ years, salary });
+      if (predictions.length > 5) predictions.pop();
+      renderHistory();
+
+    } catch (e) {
+      let msg = e.message;
+      if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+        msg = '⚠️ Cannot reach the API at localhost:8000. Make sure uvicorn is running:\n\nuvicorn app.main:app --reload --port 8000';
+      }
+      showError(msg);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Predict salary';
+    }
+  }
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.className = 'visible';
+  }
+
+  function renderHistory() {
+    const section = document.getElementById('history-section');
+    const list    = document.getElementById('history-list');
+    if (predictions.length === 0) {
+      section.className = '';
+      return;
+    }
+    section.className = 'visible';
+    list.innerHTML = predictions.map((p, i) =>
+      `<div class="history-item" onclick="loadPrediction(${i})">
+        <span class="history-yrs">${p.years.toFixed(1)} years experience</span>
+        <span class="history-sal">$${p.salary.toLocaleString()}</span>
+      </div>`
+    ).join('');
+  }
+
+  function loadPrediction(i) {
+    const p = predictions[i];
+    slider.value = Math.min(30, p.years);
+    manual.value = p.years.toFixed(1);
+    display.innerHTML = `${p.years.toFixed(1)} <span style="font-size:20px;color:#888780">years</span>`;
+  }
+
+  /* ── Keyboard shortcut: Enter to predict ── */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !btn.disabled) predict();
+  });
+</script>
+
+</body>
+</html>
